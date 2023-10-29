@@ -8,6 +8,12 @@
 *.so
 *.dylib
 
+# API key file
+services/golang_rest_apis/API_SECRET.txt
+services/golang_rest_apis/API_SECRET.txt
+**/API_SECRET.txt
+API_SECRET*
+
 # Test binary, built with `go test -c`
 *.test
 
