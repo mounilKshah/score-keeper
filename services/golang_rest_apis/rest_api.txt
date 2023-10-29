@@ -1,0 +1,336 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+
+	// "log"
+	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	// "google.golang.org/protobuf/types/known/anypb"
+	// "github.com/gorilla/mux"
+)
+
+var request_url = "https://v3.football.api-sports.io"
+var host_url = "v3.football.api-sports.io"
+var api_key = "xxx"
+var GET = "GET"
+
+func main() {
+	handleRequests()
+	// getAlbumByIDNew()
+}
+
+func handleRequests() {
+	// creates a new instance of a mux router
+	// replace http.HandleFunc with myRouter.HandleFunc
+	router := gin.Default()
+	router.GET("/albums/:id", getAlbumByIDNew)
+	router.GET("/getalldata", getAlbums)
+	router.GET("/unmarshall/:id", getJsonUnmarshall)
+	router.GET("/lineupDetails/:id", getLineupForFixture)
+	router.Run("localhost:9000")
+
+	// myRouter := mux.NewRouter().StrictSlash(true)
+	// myRouter.HandleFunc("/", homePage)
+	// myRouter.HandleFunc("/timezone", getTimezone)
+	// myRouter.HandleFunc("/fixturesold/:id", getAlbumByID)
+	// myRouter.HandleFunc("/fixtures/:id", getId)
+	// log.Fatal(http.ListenAndServe(":8000", myRouter))
+
+}
+
+type paramBody struct {
+	// IntValue        int       `json:"intValue"`
+	// BoolValue       bool      `json:"boolValue"`
+	// StringValue     string    `json:"stringValue"`
+	// DateValue       time.Time `json:"dateValue"`
+	// ObjectValue     *myObject `json:"objectValue"`
+	// NullStringValue *string   `json:"nullStringValue"`
+	// NullIntValue    *int      `json:"nullIntValue"`
+	request_param string
+	param_value   any
+}
+
+func getLineupForFixture(c *gin.Context) {
+	/*
+		curl --request GET \
+		--url 'https://v3.football.api-sports.io/fixtures/lineups?fixture=592872' \
+		--header 'x-rapidapi-host: v3.football.api-sports.io' \
+		--header 'x-rapidapi-key: XxXxXxXxXxXxXxXxXxXxXxXx'
+	*/
+
+	fixture_id := c.Param("id")
+
+	// param_bodyList := paramBody[]{
+	// 	"fixture", fixfixture_id
+	// }
+	var param_bodyList []paramBody
+	var temp_param paramBody
+
+	temp_param.request_param = "fixture"
+	temp_param.param_value = fixture_id
+
+	param_bodyList = append(param_bodyList, temp_param)
+
+	// param_bodyList[0].request_param = "fixture"
+	// param_bodyList[0].param_value = fixture_id
+
+	getData(c, param_bodyList)
+
+	// url := request_url + "/" + "fixtures" + "/" + "lineups"
+
+	// req, err := http.NewRequest(GET, url, nil)
+	// if err != nil {
+	// 	log.Print(err)
+	// 	os.Exit(1)
+	// }
+
+	// req.Header.Add("x-rapidapi-key", api_key)
+	// req.Header.Add("x-rapidapi-host", host_url)
+
+	// request_query := req.URL.Query()
+	// request_query.Add("fixture", fixture_id)
+
+	// req.URL.RawQuery = request_query.Encode()
+
+	// client := &http.Client{}
+	// res, err := client.Do(req)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// defer res.Body.Close()
+
+	// response_body, err := ioutil.ReadAll(res.Body)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// var json_map map[string]any
+
+	// err = json.Unmarshal(response_body, &json_map)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// c.JSON(http.StatusOK, json_map)
+
+	// t, ok := json_map["response"].(string)
+	// if ok {
+	// 	fmt.Println("not type string")
+	// }
+
+	// // fmt.Printf(json_map["response"])
+	// fmt.Println(t)
+
+}
+
+func getData(c *gin.Context, param_list []paramBody) {
+	fmt.Println("inside getData function: ")
+	for _, v := range param_list {
+		// fmt.Println(k)
+		fmt.Println(v.request_param)
+		fmt.Println(v.param_value)
+	}
+}
+
+func getJsonUnmarshall(c *gin.Context) {
+	// jsonFile, err := os.Open("fixture_sample_json.json")
+	// // if we os.Open returns an error then handle it
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println("Successfully Opened users.json")
+	// // defer the closing of our jsonFile so that we can parse it later on
+	// defer jsonFile.Close()
+	// // fmt.Println(jsonFile)
+	// body, err := ioutil.ReadAll(jsonFile)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	id := c.Param("id")
+	fmt.Println(id)
+	url := request_url + "/" + "fixtures/events"
+
+	req, err := http.NewRequest(GET, url, nil)
+	if err != nil {
+		log.Print(err)
+		os.Exit(1)
+	}
+
+	q := req.URL.Query()
+	q.Add("fixture", id)
+
+	req.Header.Add("x-rapidapi-key", api_key)
+	req.Header.Add("x-rapidapi-host", host_url)
+	req.URL.RawQuery = q.Encode()
+	fmt.Println(req.URL.String())
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var json_map map[string]any
+
+	err = json.Unmarshal(body, &json_map)
+	if err != nil {
+		fmt.Printf("could not unmarshal json: %s\n", err)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, json_map)
+
+}
+
+func getAlbums(c *gin.Context) {
+	jsonFile, err := os.Open("fixture_sample_json.json")
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Successfully Opened users.json")
+	// defer the closing of our jsonFile so that we can parse it later on
+	defer jsonFile.Close()
+	// fmt.Println(jsonFile)
+	body, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	c.IndentedJSON(http.StatusOK, body)
+}
+
+// func getAlbumByIDNew() {
+func getAlbumByIDNew(c *gin.Context) {
+
+	// // Open our jsonFile
+	// jsonFile, err := os.Open("fixture_sample_json.json")
+	// // if we os.Open returns an error then handle it
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println("Successfully Opened users.json")
+	// // defer the closing of our jsonFile so that we can parse it later on
+	// defer jsonFile.Close()
+	// // fmt.Println(jsonFile)
+	// body, err := ioutil.ReadAll(jsonFile)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// // fmt.Println(string(body))
+
+	// json_map := map[string]string{}
+
+	// err = json.Unmarshal([]byte(body), &json_map)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(json_map)
+	// c.IndentedJSON(http.StatusOK, jsonFile)
+
+	// id := c.Param("id")
+
+	// fmt.Println(id)
+	// url := request_url + "/" + "fixtures/events"
+	// // method := "GET"
+
+	// req, err := http.NewRequest(GET, url, nil)
+	// if err != nil {
+	// 	log.Print(err)
+	// 	os.Exit(1)
+	// }
+	// req.Header.Add("x-rapidapi-key", api_key)
+	// req.Header.Add("x-rapidapi-host", host_url)
+
+	// q := req.URL.Query()
+	// // q.Add("api_key", "key_from_environment_or_flag")
+	// q.Add("fixture", id)
+	// req.URL.RawQuery = q.Encode()
+
+	// fmt.Println(req.URL.String())
+
+	// client := &http.Client{}
+	// res, err := client.Do(req)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// defer res.Body.Close()
+
+	// body, err := ioutil.ReadAll(res.Body)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Println(string(body))
+	// fmt.Println("Endpoint Hit: Get fixtures by ID page")
+
+	// map_final := map[string]string{}
+	// json.NewDecoder(res.Body).Decode(&map_final)
+	// // err2 := json.Unmarshal([]byte(res.Body), &m)
+	// // if err2 != nil {
+	// // 	panic(err)
+	// // }
+	// fmt.Println(map_final)
+
+	// return m
+}
+
+func getTimezone(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Body)
+	fmt.Println(r.URL)
+
+	// url := "https://v3.football.api-sports.io/teams"
+	url := "https://v3.football.api-sports.io/fixtures/events?fixture="
+	// url := "https://v3.football.api-sports.io/players/seasons"
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("x-rapidapi-key", "xxx")
+	req.Header.Add("x-rapidapi-host", "v3.football.api-sports.io")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Fprintf(w, "Timezone API hit")
+	// // fmt.Fprintf(w, string(body))
+	fmt.Println(string(body))
+	fmt.Println("Endpoint Hit: Timezone page")
+}
+
+// func homePage(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Fprintf(w, "Welcome to the HomePage!")
+// 	fmt.Println("Endpoint Hit: homePage")
+// }
