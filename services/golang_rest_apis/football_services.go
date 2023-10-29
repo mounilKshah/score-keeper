@@ -7,14 +7,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	// "github.com/gorilla/mux"
 )
 
 var request_url = "https://v3.football.api-sports.io"
 var host_url = "v3.football.api-sports.io"
-var api_key = "xxx"
+var api_key = ""
 var GET = "GET"
 
 type paramBody struct {
@@ -22,7 +22,25 @@ type paramBody struct {
 	param_value   string
 }
 
+// Fetch API key and links from file and use them
+func readAPISecretsFile() {
+	file, err := os.Open("API_SECRET.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	content, err := ioutil.ReadFile("API_SECRET.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	str := string(content)
+	key_value := strings.Split(str, "|")
+	api_key = key_value[1]
+}
+
 func handleRESTRequests() {
+	readAPISecretsFile()
 	router := gin.Default()
 	router.GET("/country-data", getAllCountries)
 	router.GET("/season-data", getAllSeasons)
@@ -39,7 +57,6 @@ func handleRESTRequests() {
 
 func main() {
 	handleRESTRequests()
-	// readAPISecretsFile()
 }
 
 func getPredictions(c *gin.Context) {
@@ -284,25 +301,6 @@ func processRequest(c *gin.Context, get_request *http.Request, param_list []para
 
 	c.IndentedJSON(http.StatusOK, json_map)
 }
-
-// Fetch API key and links from file and use them
-func readAPISecretsFile() {
-	file, err := os.Open("abc.txt")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("File opened successfully")	
-	content, err := ioutil.ReadAll(file)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	file.Close()
-	fmt.Printf("File contents: \n%s", content)
-
-}
-
 
 // This uses gin.Params instead of gin.Param
 // Currently function is not used as the earlier version works fine
